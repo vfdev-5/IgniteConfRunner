@@ -1,4 +1,5 @@
 
+import torch
 from torch.utils.data import DataLoader
 
 from ignite._utils import convert_tensor
@@ -8,7 +9,7 @@ import mlflow
 
 from ignite_conf_runner.config_file.basic_configs import BasicInferenceConfig
 from ignite_conf_runner.runner.base_task import BaseTask
-from ignite_conf_runner.runner.utils import setup_timer
+from ignite_conf_runner.runner.utils import setup_timer, get_object_name
 
 
 class BasicInferenceTask(BaseTask):
@@ -28,11 +29,18 @@ class BasicInferenceTask(BaseTask):
         if 'cuda' in self.device:
             self.model = self.model.to(self.device)
 
+        # Load weights:
+        client = mlflow.tracking.MlflowClient()
+        self.model.load_state_dict(torch.load(client.download_artifacts(self.run_uuid, self.model_weights_filename)))
+        mlflow.log_param("model", get_object_name(self.model))
+        mlflow.log_param("train_run_uuid", self.run_uuid)
+        mlflow.log_param("trained_model_weights", self.model_weights_filename)
+
         self.logger.debug("Setup ignite inferencer")
         inferencer = self._setup_inferencer()
         self._setup_inferencer_handlers(inferencer)
 
-        # Override output path
+        # !!! Override output path !!!
         # self.predictions_datasaver.
 
         self.logger.debug("Input data info: ")
@@ -56,17 +64,25 @@ class BasicInferenceTask(BaseTask):
             self.final_activation = lambda x: x
 
         def _update(engine, batch):
-            x, ids = _prepare_batch(batch)
-            y_pred = self.model(x)
-            y_pred = self.final_activation(y_pred)
+
+            with torch.no_grad():
+                x, ids = _prepare_batch(batch)
+                y_pred = self.model(x)
+                y_pred = self.final_activation(y_pred)
+
+            if isinstance(ids, torch.Tensor):
+                ids = ids.numpy().tolist()
+
             return {
                 "batch_x": x,
                 "batch_ids": ids,
-                "batch_y_preds": convert_tensor(y_pred, device='cpu'),
+                "batch_y_preds": convert_tensor(y_pred, device='cpu').numpy(),
             }
 
         self.model.eval()
         inferencer = Engine(_update)
+        self.pbar.attach(inferencer)
+
         return inferencer
 
     def _setup_inferencer_handlers(self, inferencer):

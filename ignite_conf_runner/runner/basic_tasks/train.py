@@ -3,7 +3,9 @@ from torch.utils.data import DataLoader
 
 from ignite.engine import create_supervised_trainer, create_supervised_evaluator, Events
 from ignite.handlers import ModelCheckpoint, EarlyStopping, TerminateOnNan
-from ignite.metrics import Loss
+from ignite.metrics import Loss, RunningAverage
+
+from ignite.contrib.handlers.tqdm_logger import ProgressBar
 
 import mlflow
 
@@ -53,7 +55,10 @@ class BasicTrainTask(BaseTask):
             msg += " | {} number of samples".format(len(self.train_dataloader.sampler))
         self.logger.debug(msg)
 
-        self._setup_offline_train_metrics_computation(trainer, metrics)
+        self.pbar_eval = None
+        if self.train_eval_dataloader is not None:
+            self.pbar_eval = ProgressBar()
+            self._setup_offline_train_metrics_computation(trainer, metrics)
 
         if isinstance(self.train_dataloader, DataLoader):
             write_model_graph(self.writer, model=self.model, data_loader=self.train_dataloader, device=self.device)
@@ -61,6 +66,9 @@ class BasicTrainTask(BaseTask):
         if self.val_dataloader is not None:
             if self.val_metrics is None:
                 self.val_metrics = metrics
+
+            if self.pbar_eval is None:
+                self.pbar_eval = ProgressBar()
 
             val_evaluator = self._setup_val_metrics_computation(trainer)
 
@@ -151,13 +159,18 @@ class BasicTrainTask(BaseTask):
         trainer.add_event_handler(Events.ITERATION_COMPLETED, TerminateOnNan())
 
     def _setup_log_training_loss(self, trainer):
+
+        self.avg_output = RunningAverage(output_transform=lambda out: out)
+        self.avg_output.attach(trainer, 'running_avg_loss')
+        self.pbar.attach(trainer, ['running_avg_loss'])
+
         @trainer.on(Events.ITERATION_COMPLETED)
         def log_training_loss(engine):
             iteration = (engine.state.iteration - 1) % len(self.train_dataloader) + 1
             if iteration % self.log_interval == 0:
-                self.logger.info("Epoch[{}] Iteration[{}/{}] Loss: {:.4f}".format(engine.state.epoch, iteration,
-                                                                                  len(self.train_dataloader),
-                                                                                  engine.state.output))
+                # self.logger.info("Epoch[{}] Iteration[{}/{}] Loss: {:.4f}".format(engine.state.epoch, iteration,
+                #                                                                   len(self.train_dataloader),
+                #                                                                   engine.state.output))
                 self.writer.add_scalar("training/loss_vs_iterations", engine.state.output, engine.state.iteration)
                 mlflow.log_metric("training_loss_vs_iterations", engine.state.output)
 
@@ -178,12 +191,7 @@ class BasicTrainTask(BaseTask):
 
     def _setup_offline_train_metrics_computation(self, trainer, metrics):
 
-        if self.train_eval_dataloader is not None:
-            train_eval_loader = self.train_eval_dataloader
-        else:
-            self.logger.info("Use complete train dataloader for offline performance evaluation")
-            train_eval_loader = self.train_dataloader
-
+        train_eval_loader = self.train_eval_dataloader
         msg = "- train evaluation data loader: {} number of batches".format(len(train_eval_loader))
         if isinstance(train_eval_loader, DataLoader):
             msg += " | {} number of samples".format(len(train_eval_loader.sampler))
@@ -192,6 +200,8 @@ class BasicTrainTask(BaseTask):
         train_evaluator = create_supervised_evaluator(self.model, metrics=metrics,
                                                       device=self.device,
                                                       non_blocking="cuda" in self.device)
+
+        self.pbar_eval.attach(train_evaluator)
 
         @trainer.on(Events.EPOCH_COMPLETED)
         def log_training_metrics(engine):
@@ -211,6 +221,7 @@ class BasicTrainTask(BaseTask):
         val_evaluator = create_supervised_evaluator(self.model, metrics=self.val_metrics,
                                                     device=self.device,
                                                     non_blocking="cuda" in self.device)
+        self.pbar_eval.attach(val_evaluator)
 
         msg = "- validation data loader: {} number of batches".format(len(self.val_dataloader))
         if isinstance(self.val_dataloader, DataLoader):

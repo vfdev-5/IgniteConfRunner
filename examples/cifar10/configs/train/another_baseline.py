@@ -45,7 +45,11 @@ val_data_augs = Compose([
 train_dataloader = get_basic_dataloader("train", batch_size, num_workers,
                                         device=device, data_augs=train_data_augs)
 
-# Optional config param
+# Optional config param: if set evaluation on train_eval_dataloader is run
+train_eval_dataloader = get_basic_dataloader("train", batch_size, num_workers,
+                                             device=device, data_augs=val_data_augs)
+
+# Optional config param: if set evaluation on val_dataloader is run
 val_dataloader = get_basic_dataloader("test", batch_size, num_workers,
                                       device=device, data_augs=val_data_augs)
 

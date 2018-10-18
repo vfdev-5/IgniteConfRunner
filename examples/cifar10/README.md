@@ -9,9 +9,11 @@ Set `MLFLOW_TRACKING_URI` environment variable to setup output folder.
 export MLFLOW_TRACKING_URI="/path/to/local/project/output/folder"
 ```
 
-
 ## Run training
 
+```
+ignite_run
+```
 
 ## Run inference
 

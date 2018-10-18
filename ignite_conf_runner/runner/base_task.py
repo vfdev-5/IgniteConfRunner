@@ -13,8 +13,9 @@ import shutil
 import torch
 import ignite
 
+from ignite.contrib.handlers.tqdm_logger import ProgressBar
+
 import mlflow
-from mlflow.tracking import get_service
 
 from tensorboardX import SummaryWriter
 
@@ -48,6 +49,7 @@ class BaseTask(AbstractTask):
         self.log_dir = None
         self.log_filepath = None
         self.logger = logging.getLogger(self.name)
+        self.pbar = ProgressBar()
         self.log_level = logging.INFO
         self.writer = None
 
@@ -64,15 +66,6 @@ class BaseTask(AbstractTask):
         config_dict['config_filepath'] = config.config_filepath
         for k, v in config_dict.items():
             setattr(self, k.lower(), v)
-
-    def _get_experiment_id(self):
-        name = self.name if not self.debug else "Debug"
-        experiment = get_service().get_experiment_by_name(name)
-        if experiment is None:
-            experiment_id = mlflow.create_experiment(name)
-        else:
-            experiment_id = experiment.experiment_id
-        return experiment_id
 
     def start(self):
 
@@ -93,10 +86,10 @@ class BaseTask(AbstractTask):
         self.logger.info("Ignite version: {}".format(ignite.__version__))
         self.logger.info("MLFlow version: {}".format(mlflow.__version__))
 
-        experiment_id = self._get_experiment_id()
+        # This sets also experiment id as stated by `mlflow.start_run`
+        mlflow.set_experiment(self.name if not self.debug else "Debug")
         source_name = self.config_filepath.stem
-        with mlflow.start_run(experiment_id=experiment_id,
-                              source_name=source_name):
+        with mlflow.start_run(source_name=source_name):
             set_seed(self.seed)
             mlflow.log_param("seed", self.seed)
             mlflow.log_artifact(self.config_filepath.as_posix())
@@ -127,6 +120,8 @@ class BaseTask(AbstractTask):
 
             self.writer.close()
             # Transfer log dir to mlflow
+            # ? Maybe it would be better to load during `self._start` without any risk of lose everything
+            # ? if executing stops incorrectly, e.g. on a preemptible instance.
             mlflow.log_artifacts(self.log_dir.as_posix())
 
             # Remove temp folder:
