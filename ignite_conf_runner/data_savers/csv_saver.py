@@ -114,6 +114,10 @@ class MLFlowCsvDataSaver(BaseCsvDataSaver, MLFlowDataStorage):
     def __init__(self, **kwargs):
         super(MLFlowCsvDataSaver, self).__init__(**kwargs)
 
+    def started(self, *args, **kwargs):
+        self._check_active_run()
+        super(MLFlowCsvDataSaver, self).started(*args, **kwargs)
+
     def completed(self, *args, **kwargs):
         """
         Optional data saving when execution is completed

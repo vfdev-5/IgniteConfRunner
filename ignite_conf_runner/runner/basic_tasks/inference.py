@@ -93,13 +93,17 @@ class BasicInferenceTask(BaseTask):
         def log_inference_time(engine):
             self.logger.info("Inference time (seconds): {}".format(timer.value()))
 
-        @inferencer.on(Events.ITERATION_COMPLETED)
-        def save_results(engine):
-            output = engine.state.output
+        # self.predictions_datasaver.attach(inferencer)
 
-            self.predictions_datasaver(*(output['batch_x'],
-                                        output['batch_ids'],
-                                        output['batch_y_preds']))
+        # @inferencer.on(Events.ITERATION_COMPLETED)
+        # def save_results(engine):
+        #     output = engine.state.output
+        #
+        #
+        #
+        #     self.predictions_datasaver(*(output['batch_x'],
+        #                                  output['batch_ids'],
+        #                                  output['batch_y_preds']))
 
 
 basic_inference_task_factory = {

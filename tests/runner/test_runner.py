@@ -24,7 +24,7 @@ def runner():
 def test_run_example_train_task(runner):
 
     base_task_config_py = """
-    
+
 from ignite_conf_runner.config_file.basic_configs import BasicTrainConfig
 config_class = BasicTrainConfig
 
@@ -46,7 +46,7 @@ optimizer = optim.SGD(model.parameters(), lr=0.0011)
 criterion = nn.MSELoss()
 
 num_epochs = 1
- 
+
     """
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -203,4 +203,3 @@ num_epochs = 1
 #             # As job crashes -> exit code is -1
 #             self.assertEqual(result.exit_code, -1, repr(result) + "\n" + result.output)
 #             self.assertFalse(Path(output_path).exists())
-

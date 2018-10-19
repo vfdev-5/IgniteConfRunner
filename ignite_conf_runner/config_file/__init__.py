@@ -72,12 +72,7 @@ def is_dict_of_key_value_type(key_type, value_type):
 
         if not all([isinstance(k, key_type) and isinstance(v, value_type)
                     for k, v in value.items()]):
-            raise ValueError("Argument '{}' should be dictionary of ".format(attribute.name) + \
+            raise ValueError("Argument '{}' should be dictionary of ".format(attribute.name) +
                              "keys of type '{}' and values of type '{}'".format(key_type, value_type))
 
     return _validator
-
-
-def is_callable(instance, attribute, value):
-    if not callable(value):
-        raise TypeError("Argument '{}' should be callable".format(attribute.name))

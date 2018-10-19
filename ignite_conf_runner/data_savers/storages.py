@@ -28,8 +28,9 @@ class MLFlowDataStorage(object):
 
     """
     def __init__(self, **kwargs):
-        if mlflow.active_run() is None:
-            raise RuntimeError("Error: there is no current MLFlow run")
-
         self.temp_dir = tempfile.TemporaryDirectory()
         super(MLFlowDataStorage, self).__init__(**kwargs)
+
+    def _check_active_run(self):
+        if mlflow.active_run() is None:
+            raise RuntimeError("Error: there is no current MLFlow run")

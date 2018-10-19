@@ -14,7 +14,7 @@ class BasicTestTask(BaseTask):
         """
         Method to check if specific configuration is correct. Raises AssertError if is incorrect.
         """
-        assert isinstance(config, BasicTrainConfig), \
+        assert isinstance(config, BasicTestConfig), \
             "Configuration should be instance of `BasicTrainConfig`, but given {}".format(type(config))
 
     def _start(self):

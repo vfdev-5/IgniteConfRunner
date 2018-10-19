@@ -4,7 +4,8 @@ from attr.validators import optional, instance_of, and_
 import torch.nn as nn
 
 from ignite_conf_runner.config_file import BaseConfig
-from ignite_conf_runner.config_file import is_iterable_with_length, is_callable, is_positive
+from ignite_conf_runner.config_file import is_iterable_with_length
+from ignite_conf_runner.data_savers import BaseSaver
 
 
 @attr.s
@@ -43,5 +44,4 @@ class BasicInferenceConfig(BaseConfig):
     run_uuid = attr.ib(validator=instance_of(str), default=None)
     model_weights_filename = attr.ib(validator=instance_of(str), default=None)
 
-    # !!! Attrib can not be callable !!!
-    # predictions_datasaver = attr.ib(validator=is_callable, default=None)
+    predictions_datasaver = attr.ib(validator=instance_of(BaseSaver), default=None)

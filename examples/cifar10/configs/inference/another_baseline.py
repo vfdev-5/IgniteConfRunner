@@ -8,7 +8,7 @@ import torch.nn as nn
 from torchvision.models.resnet import resnet50
 from torchvision.transforms import Compose, ToTensor, Normalize
 
-from ignite_conf_runner._data_savers_ import DataSaver, CsvDatasetSaver
+from ignite_conf_runner.data_savers import MLFlowCsvDataSaver
 
 
 # Local file
@@ -45,14 +45,10 @@ run_uuid = "7ffd66b7a3c34fabb1e23956053671e9"
 model_weights_filename = "model_ResNet_22_val_loss=1.333357.pth"
 
 
-# Optional config param:
-def final_activation(output):
-    return torch.argmax(torch.softmax(output, dim=-1), dim=-1)
+# # Optional config param:
+# def final_activation(output):
+#     return torch.argmax(torch.softmax(output, dim=-1), dim=-1)
 
-
-# !!! Here we should somehow avoid to define output_path !!!
-csv_dataset_saver = CsvDatasetSaver(predictions_header=['class_id'],
-                                    output_path="output", total=len(test_dataloader.sampler))
 
 # Required config param
-predictions_datasaver = DataSaver(csv_dataset_saver)
+predictions_datasaver = MLFlowCsvDataSaver()

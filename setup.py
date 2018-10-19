@@ -45,7 +45,7 @@ setup(
     tests_require=[
         'backports.tempfile;python_version<"3"',
         'pytest',
-        'pytest-cov'        
+        'pytest-cov'
     ],
     entry_points="""
         [console_scripts]

@@ -57,5 +57,3 @@ def _clean_config(config, schema_keys):
     for k in keys:
         if k not in schema_keys:
             del config[k]
-
-
