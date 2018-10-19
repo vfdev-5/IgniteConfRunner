@@ -120,7 +120,7 @@ class BaseTask(AbstractTask):
 
             self.writer.close()
             # Transfer log dir to mlflow
-            # ? Maybe it would be better to load during `self._start` without any risk of lose everything
+            # ? Maybe it would be better to load during `self._start` without any risk to lose everything
             # ? if executing stops incorrectly, e.g. on a preemptible instance.
             mlflow.log_artifacts(self.log_dir.as_posix())
 

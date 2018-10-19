@@ -1,25 +1,30 @@
+from abc import ABCMeta, abstractmethod
 
 import numbers
 
 import pandas as pd
 
-from ignite_conf_runner.data_savers.base_saver import LocalDataSaver
+import mlflow
+
+from ignite_conf_runner.data_savers.base_saver import BaseSaver, Path
+from ignite_conf_runner.data_savers.storages import LocalDataStorage, MLFlowDataStorage
 
 
-class CsvDataSaver(LocalDataSaver):
+class BaseCsvDataSaver(BaseSaver):
     """
-    Handler to save locally the data in a single CSV file
+    Abstract handler to save the data in a single CSV file
 
     - `update` must receive output of the form `(identifier, y_pred)`.
     """
+    __metaclass__ = ABCMeta
 
-    def __init__(self, **kwargs):
-        super(CsvDataSaver, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(BaseCsvDataSaver, self).__init__(*args, **kwargs)
         self.filename = None
         self.output_df = None
         self.index_label = None
 
-    def started(self, engine, filename="predictions.csv", header=None, index_label='id'):
+    def started(self, engine, filename="predictions.csv", header=None, index_label='id', **kwargs):
         """
         Resets the saver to to it's initial state.
 
@@ -48,16 +53,19 @@ class CsvDataSaver(LocalDataSaver):
 
         self.output_df.loc[identifier, :] = y_pred
 
-    def iteration_completed(self, engine):
-        output = self._output_transform(engine.state.output)
-        self.update(output)
-
-    def completed(self, engine):
+    def completed(self, engine, output_path="output", **kwargs):
         """
         Optional data saving when execution is completed
         """
-        output_path = self.output_path / self.filename
+        output_path = Path(output_path) / self.filename
         self.output_df.to_csv(output_path, index=True, index_label=self.index_label)
+        return output_path
+
+    @abstractmethod
+    def _get_output_path(self):
+        """Abstract method to get the path where to save the output csv file
+        """
+        pass
 
     def attach(self, engine, filename="predictions.csv", header=("prediction", ), index_label='id'):
         """Attach CSV data saver to the engine.
@@ -75,7 +83,46 @@ class CsvDataSaver(LocalDataSaver):
         if not isinstance(index_label, str):
             raise TypeError("Argument `index_label` should be a string, but given {}"
                             .format(type(index_label)))
-        super(CsvDataSaver, self).attach(engine,
-                                         filename=filename,
-                                         header=header,
-                                         index_label=index_label)
+        super(BaseCsvDataSaver, self).attach(engine,
+                                             output_path=self._get_output_path(),
+                                             filename=filename,
+                                             header=header,
+                                             index_label=index_label)
+
+
+class CsvDataSaver(BaseCsvDataSaver, LocalDataStorage):
+    """
+    Handler to save locally the data in a single CSV file
+
+    - `update` must receive output of the form `(identifier, y_pred)`.
+    """
+
+    def __init__(self, **kwargs):
+        super(CsvDataSaver, self).__init__(**kwargs)
+
+    def _get_output_path(self):
+        return self.output_path
+
+
+class MLFlowCsvDataSaver(BaseCsvDataSaver, MLFlowDataStorage):
+    """
+    Handler to save locally the data in a single CSV file
+
+    - `update` must receive output of the form `(identifier, y_pred)`.
+    """
+
+    def __init__(self, **kwargs):
+        super(MLFlowCsvDataSaver, self).__init__(**kwargs)
+
+    def completed(self, *args, **kwargs):
+        """
+        Optional data saving when execution is completed
+        """
+        output_filepath = super(MLFlowCsvDataSaver, self).completed(*args, **kwargs)
+        # log output file with mlflow
+        mlflow.log_artifact(output_filepath.as_posix())
+        # remove temp folder
+        self.temp_dir.cleanup()
+
+    def _get_output_path(self):
+        return self.temp_dir.name

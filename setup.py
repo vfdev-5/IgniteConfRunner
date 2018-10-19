@@ -36,6 +36,7 @@ setup(
         'numpy',
         'torch',
         'pytorch-ignite',
+        'pandas',
         'mlflow',
         'pathlib2;python_version<"3"'
     ],

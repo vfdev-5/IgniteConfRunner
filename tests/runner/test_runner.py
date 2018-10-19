@@ -16,14 +16,9 @@ from ignite_conf_runner.runner import run_task
 
 @pytest.fixture()
 def runner():
-    tmp_path = "/tmp/output"
-    os.environ["MLFLOW_TRACKING_URI"] = tmp_path
     # Setup
     runner = CliRunner()
     yield runner
-    # Tear down
-    if Path(tmp_path).exists():
-        shutil.rmtree(tmp_path)
 
 
 def test_run_example_train_task(runner):

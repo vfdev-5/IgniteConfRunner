@@ -5,6 +5,7 @@ try:
 except ImportError:
     from pathlib2 import Path
 
+
 from ignite.engine import Events
 
 
@@ -20,7 +21,8 @@ class BaseSaver(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, output_transform=lambda x: x):
+    def __init__(self, output_transform=lambda x: x, **kwargs):
+        super(BaseSaver, self).__init__(**kwargs)
         self._output_transform = output_transform
 
     @abstractmethod
@@ -44,12 +46,12 @@ class BaseSaver(object):
         """
         pass
 
-    def iteration_completed(self, engine):
+    def iteration_completed(self, engine, **kwargs):
         output = self._output_transform(engine.state.output)
         self.update(output)
 
     @abstractmethod
-    def completed(self, engine):
+    def completed(self, engine, **kwargs):
         """
         Optional data saving when execution is completed
         """
@@ -57,44 +59,5 @@ class BaseSaver(object):
 
     def attach(self, engine, **kwargs):
         engine.add_event_handler(Events.STARTED, self.started, **kwargs)
-        engine.add_event_handler(Events.ITERATION_COMPLETED, self.iteration_completed)
-        engine.add_event_handler(Events.COMPLETED, self.completed)
-
-
-class LocalDataSaver(BaseSaver):
-    """
-    Base class for all data savers that stores locally the output file(s).
-
-    Args:
-        output_path (str): output folder's path where to store the output file(s).
-        output_transform (callable, optional): a callable that is used to transform the
-            :class:`ignite.engine.Engine`'s `process_function`'s output into the
-            form expected by the metric.
-            This can be useful if, for example, you have a multi-output model and
-            you want to compute the metric with respect to one of the outputs.
-
-    """
-    __metaclass__ = ABCMeta
-
-    def __init__(self, output_path, output_transform=lambda x: x):
-        super(LocalDataSaver, self).__init__(output_transform=output_transform)
-        self.output_path = Path(output_path)
-        if not self.output_path.exists():
-            self.output_path.mkdir(parents=True)
-
-
-class MLFlowDataSaver(BaseSaver):
-    """
-    Base class for all data savers that stores the output file(s) using MLFlow `log_artifacts`
-
-    Args:
-        output_transform (callable): a callable that is used to transform the
-            :class:`ignite.engine.Engine`'s `process_function`'s output into the
-            form expected by the metric.
-            This can be useful if, for example, you have a multi-output model and
-            you want to compute the metric with respect to one of the outputs.
-
-    """
-    __metaclass__ = ABCMeta
-
-    pass
+        engine.add_event_handler(Events.ITERATION_COMPLETED, self.iteration_completed, **kwargs)
+        engine.add_event_handler(Events.COMPLETED, self.completed, **kwargs)
