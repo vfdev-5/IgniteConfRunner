@@ -3,6 +3,8 @@
 from ignite_conf_runner.config_file.basic_configs import BasicTrainConfig
 config_class = BasicTrainConfig
 
+from custom_model import MyModel
+
 import random
 import numpy as np
 import torch.nn as nn
@@ -14,10 +16,7 @@ seed = 12345
 np.random.seed(seed)
 train_dataloader = np.random.rand(2, 4)
 
-model = nn.Sequential(
-    nn.Linear(10, 2)
-)
-
+model = MyModel()
 optimizer = optim.SGD(model.parameters(), lr=0.0011)
 criterion = nn.MSELoss()
 

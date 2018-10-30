@@ -33,6 +33,7 @@ setup(
     packages=find_packages(exclude=['tests', 'examples']),
     include_package_data=True,
     install_requires=[
+        'attrs',
         'numpy',
         'torch',
         'pytorch-ignite',

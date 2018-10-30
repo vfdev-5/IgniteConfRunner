@@ -29,10 +29,11 @@ def test_csv_dataset_saver_1_class():
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "output"
-            csv_saver = CsvDataSaver(output_path=output_path.as_posix())
             header = ("class",)
-            csv_saver.attach(inferencer, "test.csv", header=header)
-
+            csv_saver = CsvDataSaver(filename="test.csv",
+                                     header=header,
+                                     output_path=output_path.as_posix())
+            csv_saver.attach(inferencer)
             inferencer.run(ids, max_epochs=1)
             assert (output_path / "test.csv").exists()
             output_results = pd.read_csv(output_path / "test.csv", index_col='id')
@@ -61,9 +62,11 @@ def test_csv_dataset_saver_multi_labels():
 
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "output"
-            csv_saver = CsvDataSaver(output_path=output_path.as_posix())
             header = ("t1", "t2", "t3", "t4")
-            csv_saver.attach(inferencer, "test.csv", header=header)
+            csv_saver = CsvDataSaver(filename="test.csv",
+                                     header=header,
+                                     output_path=output_path.as_posix())
+            csv_saver.attach(inferencer)
 
             inferencer.run(ids, max_epochs=1)
             assert (output_path / "test.csv").exists()
@@ -98,9 +101,10 @@ def test_mlflow_csv_dataset_saver_1_class():
 
                 inferencer = Engine(update_fn)
 
-                csv_saver = MLFlowCsvDataSaver()
                 header = ("class",)
-                csv_saver.attach(inferencer, "test.csv", header=header)
+                csv_saver = MLFlowCsvDataSaver(filename="test.csv",
+                                               header=header)
+                csv_saver.attach(inferencer)
 
                 inferencer.run(ids, max_epochs=1)
 
@@ -140,9 +144,10 @@ def test_mlflow_csv_dataset_saver_multi_labels():
 
                 inferencer = Engine(update_fn)
 
-                csv_saver = MLFlowCsvDataSaver()
                 header = ("t1", "t2", "t3", "t4")
-                csv_saver.attach(inferencer, "test.csv", header=header)
+                csv_saver = MLFlowCsvDataSaver(filename="test.csv",
+                                               header=header)
+                csv_saver.attach(inferencer)
 
                 inferencer.run(ids, max_epochs=1)
 

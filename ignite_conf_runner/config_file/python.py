@@ -24,9 +24,9 @@ def setup_configuration(config_filepath):
     assert hasattr(config_class, "__attrs_attrs__"), \
         "Object `config_class` from configuration file should be a class contructed with `attr.s` decorator"
 
+    # Remove other keys such that we can instanciate object with necessary attribs:
     config_class_schema = [a.name for a in config_class.__attrs_attrs__]
-    _clean_config(config_dict, config_class_schema)
-
+    config_dict = _clean_config(config_dict, config_class_schema)
     return config_class(**config_dict)
 
 
@@ -52,8 +52,10 @@ def _read_config(filepath):
 
 
 def _clean_config(config, schema_keys):
-    """Clean module dictionary in-place"""
+    """Return a clean module dictionary"""
+    new_config = {}
     keys = list(config.keys())
     for k in keys:
-        if k not in schema_keys:
-            del config[k]
+        if k in schema_keys:
+            new_config[k] = config[k]
+    return new_config

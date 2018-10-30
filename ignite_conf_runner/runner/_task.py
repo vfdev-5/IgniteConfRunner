@@ -7,8 +7,11 @@ class AbstractTask(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, config):
-        pass
+    def _update_attributes(self, config_dict):
+        """Method to set configuration attributes as task attributes
+        """
+        for k, v in config_dict.items():
+            setattr(self, k.lower(), v)
 
     @abstractmethod
     def start(self):

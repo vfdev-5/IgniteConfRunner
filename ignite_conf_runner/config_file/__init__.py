@@ -44,9 +44,6 @@ def setup_configuration(config_filepath):
 @attr.s
 class BaseConfig(object):
 
-    # THIS SHOULD BE A GLOBAL CONFIGURATION AND SHOULD NOT BE SET IN EVERY CONFIG
-    # output_path = attr.ib(validator=instance_of(str), default=None)
-
     seed = attr.ib(default=random.randint(0, 1000), validator=instance_of(int))
     device = attr.ib(default='cpu', validator=instance_of(str))
     debug = attr.ib(default=False, validator=instance_of(bool))
@@ -76,3 +73,8 @@ def is_dict_of_key_value_type(key_type, value_type):
                              "keys of type '{}' and values of type '{}'".format(key_type, value_type))
 
     return _validator
+
+
+def is_callable(instance, attribute, value):
+    if not (callable(value)):
+        raise TypeError("Argument '{}' should be callable".format(attribute.name))

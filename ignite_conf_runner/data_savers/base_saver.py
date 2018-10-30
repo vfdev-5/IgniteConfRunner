@@ -57,7 +57,7 @@ class BaseSaver(object):
         """
         pass
 
-    def attach(self, engine, **kwargs):
+    def _attach(self, engine, **kwargs):
         engine.add_event_handler(Events.STARTED, self.started, **kwargs)
         engine.add_event_handler(Events.ITERATION_COMPLETED, self.iteration_completed, **kwargs)
         engine.add_event_handler(Events.COMPLETED, self.completed, **kwargs)

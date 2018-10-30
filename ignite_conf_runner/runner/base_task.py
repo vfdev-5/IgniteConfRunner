@@ -44,7 +44,9 @@ class BaseTask(AbstractTask):
             config (object): task configuration object
         """
         self._validate(config)
-        self._update_attributes(config)
+        config_dict = config.asdict()
+        config_dict['config_filepath'] = config.config_filepath
+        self._update_attributes(config_dict)
 
         self.log_dir = None
         self.log_filepath = None
@@ -58,14 +60,6 @@ class BaseTask(AbstractTask):
         """
         assert isinstance(config, BaseConfig), \
             "Configuration should be instance of `BaseConfig`, but given {}".format(type(config))
-
-    def _update_attributes(self, config):
-        """Method to set configuration attributes as task attributes
-        """
-        config_dict = config.asdict()
-        config_dict['config_filepath'] = config.config_filepath
-        for k, v in config_dict.items():
-            setattr(self, k.lower(), v)
 
     def start(self):
 

@@ -30,18 +30,11 @@ class BasicInferenceTask(BaseTask):
             self.model = self.model.to(self.device)
 
         # Load weights:
-        client = mlflow.tracking.MlflowClient()
-        self.model.load_state_dict(torch.load(client.download_artifacts(self.run_uuid, self.model_weights_filename)))
-        mlflow.log_param("model", get_object_name(self.model))
-        mlflow.log_param("train_run_uuid", self.run_uuid)
-        mlflow.log_param("trained_model_weights", self.model_weights_filename)
+        self._load_model_weights()
 
         self.logger.debug("Setup ignite inferencer")
         inferencer = self._setup_inferencer()
         self._setup_inferencer_handlers(inferencer)
-
-        # !!! Override output path !!!
-        # self.predictions_datasaver.
 
         self.logger.debug("Input data info: ")
         msg = "- test data loader: {} number of batches".format(len(self.test_dataloader))
@@ -52,6 +45,13 @@ class BasicInferenceTask(BaseTask):
         self.logger.info("Start inference")
         inferencer.run(self.test_dataloader, max_epochs=1)
         self.logger.debug("Inference is ended")
+
+    def _load_model_weights(self):
+        client = mlflow.tracking.MlflowClient()
+        self.model.load_state_dict(torch.load(client.download_artifacts(self.run_uuid, self.model_weights_filename)))
+        mlflow.log_param("model", get_object_name(self.model))
+        mlflow.log_param("train_run_uuid", self.run_uuid)
+        mlflow.log_param("trained_model_weights", self.model_weights_filename)
 
     def _setup_inferencer(self):
 

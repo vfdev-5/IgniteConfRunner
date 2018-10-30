@@ -15,21 +15,24 @@ class BaseCsvDataSaver(BaseSaver):
     Abstract handler to save the data in a single CSV file
 
     - `update` must receive output of the form `(identifier, y_pred)`.
+
+    Args:
+        filename (str): output csv filename, e.g "predictions.csv"
+        header (list or tuple): header of the output csv file, e.g. `header=('prediction',)`
+        index_label (str): csv index label
+
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, filename, header, index_label='id',
+                 *args, **kwargs):
+        if not isinstance(header, (list, tuple)):
+            raise TypeError("Argument `header` should be a list or tuple, but given {}"
+                            .format(type(header)))
+        if not isinstance(index_label, str):
+            raise TypeError("Argument `index_label` should be a string, but given {}"
+                            .format(type(index_label)))
         super(BaseCsvDataSaver, self).__init__(*args, **kwargs)
-        self.filename = None
-        self.output_df = None
-        self.index_label = None
-
-    def started(self, engine, filename="predictions.csv", header=None, index_label='id', **kwargs):
-        """
-        Resets the saver to to it's initial state.
-
-        This is called at the start of each epoch.
-        """
         self.filename = filename
         self.output_df = pd.DataFrame(columns=header)
         self.index_label = index_label
@@ -67,27 +70,13 @@ class BaseCsvDataSaver(BaseSaver):
         """
         pass
 
-    def attach(self, engine, filename="predictions.csv", header=("prediction", ), index_label='id'):
+    def attach(self, engine):
         """Attach CSV data saver to the engine.
 
         Args:
             engine (Engine): engine to attach the saver to.
-            filename (str): output csv filename, e.g "predictions.csv"
-            header (list or tuple): header of the output csv file
-            index_label (str): csv index label
-
         """
-        if not isinstance(header, (list, tuple)):
-            raise TypeError("Argument `header` should be a list or tuple, but given {}"
-                            .format(type(header)))
-        if not isinstance(index_label, str):
-            raise TypeError("Argument `index_label` should be a string, but given {}"
-                            .format(type(index_label)))
-        super(BaseCsvDataSaver, self).attach(engine,
-                                             output_path=self._get_output_path(),
-                                             filename=filename,
-                                             header=header,
-                                             index_label=index_label)
+        self._attach(engine, output_path=self._get_output_path())
 
 
 class CsvDataSaver(BaseCsvDataSaver, LocalDataStorage):

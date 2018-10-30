@@ -55,13 +55,13 @@ class BasicTrainTask(BaseTask):
             msg += " | {} number of samples".format(len(self.train_dataloader.sampler))
         self.logger.debug(msg)
 
+        if isinstance(self.train_dataloader, DataLoader):
+            write_model_graph(self.writer, model=self.model, data_loader=self.train_dataloader, device=self.device)
+
         self.pbar_eval = None
         if self.train_eval_dataloader is not None:
             self.pbar_eval = ProgressBar()
             self._setup_offline_train_metrics_computation(trainer, metrics)
-
-        if isinstance(self.train_dataloader, DataLoader):
-            write_model_graph(self.writer, model=self.model, data_loader=self.train_dataloader, device=self.device)
 
         if self.val_dataloader is not None:
             if self.val_metrics is None:

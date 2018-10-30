@@ -28,9 +28,50 @@ def test_setup_configuration_python():
     assert isinstance(config.criterion, torch.nn.MSELoss)
     assert isinstance(config.num_epochs, int)
 
+    x = torch.rand(4, 10)
+    y = config.model(x)
+    assert isinstance(y, torch.Tensor) and y.shape == (4, 2)
+
 
 def test_setup_configuration_yaml():
     config_filepath = Path(__file__).parent / "assets" / "example_train_config.yaml"
 
     with raises(NotImplementedError):
         setup_configuration(config_filepath)
+
+
+def test_setup_configuration_python_with_custom_model():
+    path = Path(__file__).parent / "assets"
+    import sys
+    sys.path.insert(0, path.as_posix())
+    config_filepath = path / "example_custom_model_config.py"
+
+    config = setup_configuration(config_filepath)
+    print(config)
+
+    import torch
+    x = torch.rand(4, 10)
+    y = config.model(x)
+    assert isinstance(y, torch.Tensor)
+
+
+def test_setup_configuration_python_with_callable():
+    path = Path(__file__).parent / "assets"
+    import sys
+    sys.path.insert(0, path.as_posix())
+    config_filepath = path / "example_custom_config.py"
+
+    config = setup_configuration(config_filepath)
+
+    import torch
+    x = torch.rand(4, 10)
+    y = config.activation(x)
+    assert isinstance(y, torch.Tensor)
+
+    x = torch.rand(4, 10)
+    y = config.activation_func(x)
+    assert isinstance(y, torch.Tensor)
+
+    x = torch.rand(4, 10)
+    y = config.local_activation(x)
+    assert isinstance(y, torch.Tensor)
