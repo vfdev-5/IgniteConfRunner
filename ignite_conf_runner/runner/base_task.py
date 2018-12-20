@@ -96,7 +96,7 @@ class BaseTask(AbstractTask):
                     "Device {} is not compatible with torch.cuda.is_available()".format(self.device)
                 from torch.backends import cudnn
                 cudnn.benchmark = True
-                self.logger.debug("CUDA is enabled")
+                self.logger.info("CUDA version: {}".format(torch.version.cuda))
 
             try:
                 self._start()
