@@ -64,8 +64,8 @@ def is_positive(instance, attribute, value):
 
 def is_dict_of_key_value_type(key_type, value_type):
     def _validator(instance, attribute, value):
-        if not isinstance(value, dict):
-            raise TypeError("Argument '{}' should be dictionary".format(attribute.name))
+        if not isinstance(value, dict) or len(value) == 0:
+            raise TypeError("Argument '{}' should be non-empty dictionary".format(attribute.name))
 
         if not all([isinstance(k, key_type) and isinstance(v, value_type)
                     for k, v in value.items()]):
