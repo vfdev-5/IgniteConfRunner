@@ -33,23 +33,22 @@ def _assert_engine(engine, name):
                         "but given {}".format(name, type(engine)))
 
 
-def setup_log_training_loss(trainer, config, logger):
+def setup_log_training_loss(trainer, config):
 
     _assert_engine(trainer, "trainer")
     _assert_has_attr(config, "logging", LoggingConfig)
 
     avg_output = RunningAverage(output_transform=lambda out: out)
-    avg_output.attach(trainer, 'running_avg_loss')
+    avg_output.attach(trainer, 'loss')
+
+    ProgressBar(persist=True).attach(trainer, metric_names=['loss'])
 
     @trainer.on(Events.ITERATION_COMPLETED)
     def log_training_loss(engine):
-        mlflow.log_metric("training_loss_vs_iterations", engine.state.metrics['running_avg_loss'])
         len_train_dataloader = len(engine.state.dataloader)
         iteration = (engine.state.iteration - 1) % len_train_dataloader + 1
         if iteration % config.logging.log_interval == 0:
-            logger.info("Epoch[{}] Iteration[{}/{}] Loss: {:.4f}".format(engine.state.epoch, iteration,
-                                                                         len_train_dataloader,
-                                                                         engine.state.metrics['running_avg_loss']))
+            mlflow.log_metric("training_loss_vs_iterations", engine.state.metrics['loss'])
 
 
 def setup_trainer_handlers(trainer, config, logger):
@@ -60,6 +59,9 @@ def setup_trainer_handlers(trainer, config, logger):
     _assert_has_attr(config, "solver", SolverConfig)
     _assert_has_attr(config, "model_conf", ModelConfig)
 
+    setup_log_training_loss(trainer, config)
+    setup_log_learning_rate(trainer, config, logger)
+
     # Setup timer to measure training time
     timer = setup_timer(trainer)
 
@@ -68,9 +70,6 @@ def setup_trainer_handlers(trainer, config, logger):
         logger.info("One epoch training time (seconds): {}".format(timer.value()))
 
     trainer.add_event_handler(Events.ITERATION_COMPLETED, TerminateOnNan())
-
-    setup_log_training_loss(trainer, config, logger)
-    setup_log_learning_rate(trainer, config, logger)
 
     last_model_saver = ModelCheckpoint(config.log_dir.as_posix(),
                                        filename_prefix="checkpoint",

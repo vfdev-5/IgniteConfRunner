@@ -27,6 +27,8 @@ def run(config, logger, **kwargs):
         logger.info("Load weights from {}/{}".format(run_id, weights_filename))
         client = mlflow.tracking.MlflowClient(tracking_uri=os.environ['MLFLOW_TRACKING_URI'])
         model.load_state_dict(torch.load(weights_path(client, run_id, weights_filename)))
+        
+        
 
     config.validation.val_metrics['loss'] = Loss(criterion)
 
@@ -38,6 +40,9 @@ def run(config, logger, **kwargs):
     mlflow.log_param("model", get_object_name(model))
     mlflow.log_param("criterion", get_object_name(criterion))
     mlflow.log_param("optimizer", get_object_name(optimizer))
+    
+    mlflow.log_param("fold_index", config.fold_index)
+    mlflow.log_param("num_folds", config.num_folds)
 
     trainer = create_supervised_trainer(model, optimizer, criterion,
                                         device=config.device,

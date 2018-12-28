@@ -18,7 +18,7 @@ from dataflow import get_train_val_dataloaders_on_fold
 
 config = BasicTrainConfig()
 config.seed = 12
-config.device = "cpu"
+config.device = "cuda"
 config.debug = False
 
 # Add a custom fields
@@ -63,7 +63,7 @@ config.model_conf.model = model
 # Solver params
 config.solver.optimizer = optim.SGD(model.parameters(), lr=0.0011)
 config.solver.criterion = nn.CrossEntropyLoss()
-config.solver.num_epochs = 2
+config.solver.num_epochs = 3
 config.solver.lr_scheduler = ExponentialLR(config.solver.optimizer, gamma=0.7)
 
 # Logging params
