@@ -23,7 +23,7 @@ config.debug = False
 
 # Add a custom fields
 config.fold_index = 0
-config.num_folds = 5
+config.num_folds = 3
 
 
 batch_size = 128

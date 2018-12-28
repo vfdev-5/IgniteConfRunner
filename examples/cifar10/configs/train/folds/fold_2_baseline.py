@@ -22,7 +22,7 @@ config.debug = False
 
 # Add a custom fields
 config.fold_index = 2
-config.num_folds = 5
+config.num_folds = 3
 
 
 batch_size = 128
@@ -54,13 +54,15 @@ train_dataloader, val_dataloader = get_train_val_dataloaders_on_fold(config.fold
 config.train_dataloader = train_dataloader
 
 
-config.model = resnet34(pretrained=False, num_classes=10)
-config.model.avgpool = nn.AdaptiveAvgPool2d(1)
+model = resnet34(pretrained=False, num_classes=10)
+model.avgpool = nn.AdaptiveAvgPool2d(1)
+
+config.model_conf.model = model
 
 # Solver params
-config.solver.optimizer = optim.SGD(config.model.parameters(), lr=0.0011)
+config.solver.optimizer = optim.SGD(model.parameters(), lr=0.0011)
 config.solver.criterion = nn.CrossEntropyLoss()
-config.solver.num_epochs = 10
+config.solver.num_epochs = 3
 config.solver.lr_scheduler = ExponentialLR(config.solver.optimizer, gamma=0.7)
 
 # Logging params

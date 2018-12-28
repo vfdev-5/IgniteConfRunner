@@ -68,6 +68,7 @@ def setup_trainer_handlers(trainer, config, logger):
     @trainer.on(Events.EPOCH_COMPLETED)
     def log_training_time(engine):
         logger.info("One epoch training time (seconds): {}".format(timer.value()))
+        mlflow.log_metric("epoch", engine.state.epoch)
 
     trainer.add_event_handler(Events.ITERATION_COMPLETED, TerminateOnNan())
 
