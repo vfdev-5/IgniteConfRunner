@@ -1,6 +1,7 @@
 
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import ExponentialLR
 
 from torchvision.models.resnet import resnet34
 from torchvision.transforms import Compose, ColorJitter, ToTensor, \
@@ -20,7 +21,7 @@ config.device = "cuda"
 config.debug = False
 
 # Add a custom fields
-config.fold_index = 0
+config.fold_index = 1
 config.num_folds = 5
 
 
@@ -60,6 +61,7 @@ config.model.avgpool = nn.AdaptiveAvgPool2d(1)
 config.solver.optimizer = optim.SGD(config.model.parameters(), lr=0.0011)
 config.solver.criterion = nn.CrossEntropyLoss()
 config.solver.num_epochs = 10
+config.solver.lr_scheduler = ExponentialLR(config.solver.optimizer, gamma=0.7)
 
 # Logging params
 config.logging.log_interval = 10  # Every 10 iterations

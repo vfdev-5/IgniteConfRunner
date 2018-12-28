@@ -1,27 +1,40 @@
+import random
+import logging
 
-from ignite.engine import Events
-from ignite.handlers import Timer
-from ignite._utils import convert_tensor
+import numpy as np
 
-
-def setup_timer(engine):
-    timer = Timer(average=True)
-    timer.attach(engine,
-                 start=Events.EPOCH_STARTED,
-                 resume=Events.ITERATION_STARTED,
-                 pause=Events.ITERATION_COMPLETED)
-    return timer
+import torch
 
 
-def get_object_name(obj):
-    return obj.__name__ if hasattr(obj, "__name__") else obj.__class__.__name__
+def setup_logger(logger, log_filepath=None, level=logging.INFO):
+
+    if logger.hasHandlers():
+        for h in list(logger.handlers):
+            logger.removeHandler(h)
+
+    logger.setLevel(level)
+
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s| %(message)s")
+
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+    if log_filepath is not None:
+        # create file handler which logs even debug messages
+        fh = logging.FileHandler(log_filepath)
+        fh.setLevel(level)
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
 
 
-def write_model_graph(writer, model, data_loader, device):
-    data_loader_iter = iter(data_loader)
-    x, y = next(data_loader_iter)
-    x = convert_tensor(x, device=device)
-    try:
-        writer.add_graph(model, x)
-    except Exception as e:
-        print("Failed to save model graph: {}".format(e))
+def set_seed(seed):
+    if seed is None:
+        seed = random.randint(0, 10000)
+
+    random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)

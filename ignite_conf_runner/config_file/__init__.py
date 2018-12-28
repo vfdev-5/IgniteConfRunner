@@ -1,44 +1,8 @@
 import random
 
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
-
 
 import attr
 from attr.validators import instance_of
-
-from ignite_conf_runner.config_file.python import setup_configuration as py_setup_configuration
-from ignite_conf_runner.config_file.yaml import setup_configuration as yaml_setup_configuration
-
-
-def setup_configuration(config_filepath):
-    """Create configuration class instance based on configuration file.
-    Method raises `TypeError` or `ValueError` exceptions if configuration is not valid
-
-    Args:
-        config_filepath (str or Path): input configuration filepath
-
-    Returns:
-        instance of configuration class
-    """
-    assert isinstance(config_filepath, (str, Path)) and Path(config_filepath).exists(), \
-        "Argument `config_filepath` should be a existing file"
-
-    config_filepath = Path(config_filepath)
-    config_filepath_suffix = config_filepath.suffix.lower()
-
-    if config_filepath_suffix in ('.py', ):
-        config = py_setup_configuration(config_filepath)
-    elif config_filepath_suffix in ('.yml', '.yaml'):
-        config = yaml_setup_configuration(config_filepath)
-    else:
-        raise RuntimeError("Configuration file of type '{}' is not supported".format(config_filepath.suffix))
-
-    # Add configuration filepath as attribute
-    config.config_filepath = config_filepath
-    return config
 
 
 @attr.s
