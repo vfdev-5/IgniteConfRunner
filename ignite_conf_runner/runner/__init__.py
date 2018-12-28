@@ -8,6 +8,8 @@ try:
 except ImportError:
     from pathlib2 import Path
 
+import attr
+
 import click
 
 from ignite_conf_runner.runner.mlflow_logger import log_experiment
@@ -54,6 +56,9 @@ def run_experiment(script_filepath, config_filepath):
                            .format(config_filepath, type(config)))
     config.config_filepath = Path(config_filepath)
     config.script_filepath = Path(script_filepath)
+
+    # Validate configuration
+    attr.validate(config)
 
     log_experiment(exp_name, run_fn, config)
 

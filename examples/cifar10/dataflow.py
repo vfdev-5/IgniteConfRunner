@@ -18,8 +18,8 @@ class TransformedDataset(Dataset):
         return len(self.ds)
 
     def __getitem__(self, index):
-        dp = self.ds[index]
-        return self.transform_fn(dp)
+        x, y = self.ds[index]
+        return self.transform_fn(x), y
 
 
 def get_train_val_dataloaders_on_fold(fold_index, n_folds=5, seed=12,

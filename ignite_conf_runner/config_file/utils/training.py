@@ -8,13 +8,13 @@ from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau
 
 from ignite.metrics import Metric
 
-from ignite_conf_runner.config_file import is_dict_of_key_value_type, is_positive, is_iterable_with_length
+from ignite_conf_runner.config_file import _BaseConfig, is_dict_of_key_value_type, is_positive, is_iterable_with_length
 
-__all__ = ['LoggingConfig', 'SolverConfig', 'ValidationConfig']
+__all__ = ['LoggingConfig', 'ModelConfig', 'SolverConfig', 'ValidationConfig']
 
 
 @attr.s
-class LoggingConfig(object):
+class LoggingConfig(_BaseConfig):
     """Logging configuration
 
     Args:
@@ -30,11 +30,22 @@ class LoggingConfig(object):
                                   validator=optional(and_(instance_of(int), is_positive)))
 
 
+@attr.s
+class ModelConfig(_BaseConfig):
+    """
+
+    """
+    model = attr.ib(init=False, default=nn.Module(), validator=instance_of(nn.Module))
+
+    run_id = attr.ib(init=False, default=None, validator=optional(instance_of(str)))
+    weights_filename = attr.ib(init=False, default=None, validator=optional(instance_of(str)))
+
+
 _dummy_optim = torch.optim.Optimizer([torch.Tensor(0)], {})
 
 
 @attr.s
-class SolverConfig(object):
+class SolverConfig(_BaseConfig):
     """
 
     """
@@ -71,7 +82,7 @@ _dummy_metric = {"d": _DummyMetric()}
 
 
 @attr.s
-class ValidationConfig(object):
+class ValidationConfig(_BaseConfig):
 
     val_dataloader = attr.ib(init=False, default=[], validator=is_iterable_with_length)
     val_metrics = attr.ib(init=False, default=_dummy_metric,

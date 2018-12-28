@@ -1,11 +1,9 @@
 import attr
 from attr.validators import optional, instance_of
 
-import torch.nn as nn
-
 from ignite_conf_runner.config_file import BaseConfig
 from ignite_conf_runner.config_file import is_iterable_with_length
-from ignite_conf_runner.config_file.utils.training import LoggingConfig, SolverConfig, ValidationConfig
+from ignite_conf_runner.config_file.utils.training import LoggingConfig, ModelConfig, SolverConfig, ValidationConfig
 
 __all__ = ['BasicTrainConfig']
 
@@ -18,8 +16,8 @@ class BasicTrainConfig(BaseConfig):
 
     train_dataloader = attr.ib(init=False, validator=is_iterable_with_length, default=[])
 
-    model = attr.ib(init=False, validator=instance_of(nn.Module),
-                    default=nn.Module())
+    model_conf = attr.ib(init=False, validator=instance_of(ModelConfig),
+                         default=ModelConfig())
 
     logging = attr.ib(init=False, validator=optional(instance_of(LoggingConfig)),
                       default=LoggingConfig())

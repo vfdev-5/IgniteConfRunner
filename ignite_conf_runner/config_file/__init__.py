@@ -6,14 +6,21 @@ from attr.validators import instance_of
 
 
 @attr.s
-class BaseConfig(object):
+class _BaseConfig(object):
+
+    def asdict(self):
+        return attr.asdict(self)
+
+    def __contains__(self, attrib_name):
+        return hasattr(self, attrib_name)
+
+
+@attr.s
+class BaseConfig(_BaseConfig):
 
     seed = attr.ib(default=random.randint(0, 1000), validator=instance_of(int))
     device = attr.ib(default='cpu', validator=instance_of(str))
     debug = attr.ib(default=False, validator=instance_of(bool))
-
-    def asdict(self):
-        return attr.asdict(self)
 
 
 def is_iterable_with_length(instance, attribute, value):
