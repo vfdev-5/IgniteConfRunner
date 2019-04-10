@@ -33,12 +33,9 @@ setup(
     packages=find_packages(exclude=['tests', 'examples']),
     include_package_data=True,
     install_requires=[
-        'attrs',
-        'numpy',
+        'click',
         'torch',
         'pytorch-ignite',
-        'pandas',
-        'mlflow',
         'pathlib2;python_version<"3"'
     ],
     license='MIT',
@@ -50,6 +47,6 @@ setup(
     ],
     entry_points="""
         [console_scripts]
-            ignite_run=ignite_conf_runner.runner:run_task
+            ignite_run=ignite_conf_runner.runner.__main__:command
     """
 )

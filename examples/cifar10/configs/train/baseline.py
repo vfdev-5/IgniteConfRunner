@@ -6,22 +6,17 @@ from torchvision.models.resnet import resnet34
 from torchvision.transforms import Compose, ColorJitter, ToTensor, \
     RandomHorizontalFlip, RandomVerticalFlip, Normalize
 
-from ignite.metrics import Precision, Recall, Accuracy
-
-from ignite_conf_runner.config_file.basic_configs import BasicTrainConfig
-
 # Local file
 from dataflow import get_train_val_dataloaders_on_fold
 
 
-config = BasicTrainConfig()
-config.seed = 12
-config.device = "cuda"
-config.debug = False
+seed = 12
+device = "cuda"
+debug = False
 
 # Add a custom fields
-config.fold_index = 0
-config.num_folds = 5
+fold_index = 0
+num_folds = 5
 
 
 batch_size = 128
@@ -42,38 +37,24 @@ val_data_augs = Compose([
 
 
 # Required config param
-train_dataloader, val_dataloader = get_train_val_dataloaders_on_fold(config.fold_index, n_folds=config.num_folds,
-                                                                     seed=config.seed,
+train_dataloader, val_dataloader = get_train_val_dataloaders_on_fold(fold_index, n_folds=num_folds,
+                                                                     seed=seed,
                                                                      train_transforms=train_data_augs,
                                                                      val_transforms=val_data_augs,
                                                                      batch_size=batch_size, num_workers=num_workers,
-                                                                     device=config.device)
+                                                                     device=device)
+train_eval_dataloader = train_dataloader
 
-# Data & model params
-config.train_dataloader = train_dataloader
-
-
-config.model = resnet34(pretrained=False, num_classes=10)
-config.model.avgpool = nn.AdaptiveAvgPool2d(1)
+model = resnet34(pretrained=False, num_classes=10)
+model.avgpool = nn.AdaptiveAvgPool2d(1)
 
 # Solver params
-config.solver.optimizer = optim.SGD(config.model.parameters(), lr=0.0011)
-config.solver.criterion = nn.CrossEntropyLoss()
-config.solver.num_epochs = 10
+optimizer = optim.SGD(model.parameters(), lr=0.0011)
+criterion = nn.CrossEntropyLoss()
+num_epochs = 10
 
 # Logging params
-config.logging.log_interval = 10  # Every 10 iterations
-config.logging.checkpoint_interval = 1000  # Every 1000 iterations
+checkpoint_interval = 1000  # Every 1000 iterations
 
 # Validation params
-config.validation.val_interval = 1  # Every epoch
-config.validation.val_dataloader = val_dataloader
-config.validation.train_eval_dataloader = train_dataloader
-config.validation.val_metrics = {
-    "precision": Precision(average=True),
-    "recall": Recall(average=True),
-    "accuracy": Accuracy()
-}
-
-# We use same metrics to measure perfs on the training dataset
-config.validation.train_metrics = config.validation.val_metrics
+val_interval = 1  # Every epoch

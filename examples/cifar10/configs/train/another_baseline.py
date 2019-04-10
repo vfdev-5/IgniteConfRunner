@@ -1,6 +1,5 @@
-
 # Example Train config as python file
-from ignite_conf_runner.config_file.basic_configs import BasicTrainConfig
+
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR

@@ -1,12 +1,16 @@
-import random
 import logging
+import importlib.util
 
-import numpy as np
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path
 
-import torch
+
+LOGGING_FORMATTER = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s| %(message)s")
 
 
-def setup_logger(logger, log_filepath=None, level=logging.INFO):
+def setup_logger(logger, level=logging.INFO):
 
     if logger.hasHandlers():
         for h in list(logger.handlers):
@@ -14,27 +18,33 @@ def setup_logger(logger, log_filepath=None, level=logging.INFO):
 
     logger.setLevel(level)
 
-    # create formatter and add it to the handlers
-    formatter = logging.Formatter("%(asctime)s|%(name)s|%(levelname)s| %(message)s")
-
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(level)
-    ch.setFormatter(formatter)
+    ch.setFormatter(LOGGING_FORMATTER)
     logger.addHandler(ch)
 
-    if log_filepath is not None:
-        # create file handler which logs even debug messages
-        fh = logging.FileHandler(log_filepath)
-        fh.setLevel(level)
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
+
+def add_logger_filehandler(logger, filepath):
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler(filepath)
+    fh.setLevel(logger.level)
+    fh.setFormatter(LOGGING_FORMATTER)
+    logger.addHandler(fh)
 
 
 def set_seed(seed):
-    if seed is None:
-        seed = random.randint(0, 10000)
+    import random
+    import numpy as np
+    import torch
 
     random.seed(seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
+
+
+def load_module(filepath):
+    spec = importlib.util.spec_from_file_location(Path(filepath).stem, filepath)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module

@@ -1,66 +1,77 @@
-import tempfile
 import os
+from ignite_conf_runner.runner import run_script
 
 import pytest
 
-try:
-    from pathlib import Path
-except ImportError:
-    from pathlib2 import Path
-
-from click.testing import CliRunner
-
-from ignite_conf_runner.runner import run_experiment
+from tests import dirname, script_filepath, logging_script_filepath, config_filepath
 
 
-@pytest.fixture()
-def runner():
-    # Setup
-    runner = CliRunner()
-    yield runner
+def test_run_script_script_file_no_run(dirname):  # noqa: F811
+    script_fp = os.path.join(dirname, "script.py")
 
+    s = """
+import numpy as np
 
-def test_run_example_train_task(runner):
+a = 123
+b = np.array([1, 2, 3])
 
-    example_script_py = """
-    
-def run(config, **kwargs):
-    print("Example run")      
-    
     """
 
-    example_config_py = """
+    with open(script_fp, "w") as h:
+        h.write(s)
 
-from ignite_conf_runner.config_file import BaseConfig
+    with pytest.raises(RuntimeError, match="should contain a method `run"):
+        run_script(script_fp, "")
 
-config = BaseConfig()
-config.seed = 12345
-config.device = 'cpu'
-config.debug = False
+
+def test_run_script_script_file_run_not_callable(dirname):  # noqa: F811
+    script_fp = os.path.join(dirname, "script.py")
+
+    s = """
+run = 0
     """
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        output_path = Path(tmpdir) / "output"
-        os.environ['MLFLOW_TRACKING_URI'] = output_path.as_posix()
+    with open(script_fp, "w") as h:
+        h.write(s)
 
-        config_filepath = Path(tmpdir) / "example_base_config.py"
-        with config_filepath.open('w') as h:
-            h.write(example_config_py)
-        assert config_filepath.exists()
+    with pytest.raises(RuntimeError, match="should be a callable function"):
+        run_script(script_fp, "")
 
-        script_filepath = Path(tmpdir) / "example_script.py"
-        with script_filepath.open('w') as h:
-            h.write(example_script_py)
 
-        cmd = [script_filepath.as_posix(), config_filepath.as_posix()]
-        result = runner.invoke(run_experiment, cmd)
-        assert result.exit_code == 0, repr(result) + "\n" + result.output
-        assert output_path.exists()
-        assert (output_path / "0").exists() and (output_path / "1").exists()
-        log_dir = output_path / "1"
-        run_uuids = [i for i in log_dir.iterdir() if i.is_dir()]
-        assert len(run_uuids) == 1
-        assert (output_path / "1" / run_uuids[0] / "artifacts" / "example_base_config.py").exists()
-        assert (output_path / "1" / run_uuids[0] / "artifacts" / "example_script.py").exists()
-        assert (output_path / "1" / run_uuids[0] / "artifacts" / "run.log").exists()
-        assert (output_path / "1" / run_uuids[0] / "params" / "seed").exists()
+def test_run_script_script_file_run_wrong_signature(dirname):  # noqa: F811
+    script_fp = os.path.join(dirname, "script.py")
+
+    s = """
+def run():
+    pass
+    """
+
+    with open(script_fp, "w") as h:
+        h.write(s)
+
+    with pytest.raises(RuntimeError, match="Run method signature should be"):
+        run_script(script_fp, "")
+
+
+def test_run_script(capsys, script_filepath, config_filepath):  # noqa: F811
+
+    run_script(script_filepath, config_filepath)
+
+    captured = capsys.readouterr()
+    out = captured.out.split('\r')
+    out = list(map(lambda x: x.strip(), out))
+    out = list(filter(None, out))
+    assert "Run\n1\n2\n{}\n{}".format(config_filepath, script_filepath) in out[-1]
+
+
+def test_run_logging_script(capsys, logging_script_filepath, config_filepath):  # noqa: F811
+
+    run_script(logging_script_filepath, config_filepath)
+
+    captured = capsys.readouterr()
+    out = captured.err.split('\n')
+    out = list(map(lambda x: x.strip(), out))
+    out = list(filter(None, out))
+    assert "|script|INFO| Start run script" in out[0]
+    assert "|script|INFO| 1" in out[1]
+    assert "|script|INFO| 2" in out[2]
